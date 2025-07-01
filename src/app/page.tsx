@@ -144,7 +144,7 @@ export default function Home() {
                     />
                     <select
                       value={editStatus}
-                      onChange={e => setEditStatus(e.target.value as any)}
+                      onChange={e => setEditStatus(e.target.value as "thinking" | "acting" | "solved")}
                       className="w-full mb-1 border rounded px-2 py-1"
                     >
                       <option value="thinking">Thinking</option>
