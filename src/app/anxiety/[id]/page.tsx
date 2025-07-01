@@ -33,6 +33,10 @@ export default function AnxietyDetailPage() {
   const [newStep, setNewStep] = useState<{ [ideaId: string]: string }>({});
   const [progressValue, setProgressValue] = useState<number>(log?.progress ?? 0);
   const [showSave, setShowSave] = useState(false);
+  const [editingIdeaId, setEditingIdeaId] = useState<string | null>(null);
+  const [editingIdeaTitle, setEditingIdeaTitle] = useState("");
+  const [editingStepId, setEditingStepId] = useState<string | null>(null);
+  const [editingStepText, setEditingStepText] = useState("");
 
   useEffect(() => {
     const savedLogs = JSON.parse(localStorage.getItem("anxietyLogs") || "[]");
@@ -160,6 +164,49 @@ export default function AnxietyDetailPage() {
     updateLog(updatedLog);
   };
 
+  // Edit idea title
+  const startEditIdea = (idea: Idea) => {
+    setEditingIdeaId(idea.id);
+    setEditingIdeaTitle(idea.title);
+  };
+  const saveEditIdea = (ideaId: string) => {
+    if (!log) return;
+    const updatedLog: Anxiety = {
+      ...log,
+      ideas: log.ideas?.map((idea) =>
+        idea.id === ideaId ? { ...idea, title: editingIdeaTitle } : idea
+      ),
+    };
+    updateLog(updatedLog);
+    setEditingIdeaId(null);
+  };
+
+  // Edit step text
+  const startEditStep = (ideaId: string, step: Step) => {
+    setEditingIdeaId(ideaId);
+    setEditingStepId(step.id);
+    setEditingStepText(step.text);
+  };
+  const saveEditStep = (ideaId: string, stepId: string) => {
+    if (!log) return;
+    const updatedLog: Anxiety = {
+      ...log,
+      ideas: log.ideas?.map((idea) =>
+        idea.id === ideaId
+          ? {
+              ...idea,
+              steps: idea.steps.map((step) =>
+                step.id === stepId ? { ...step, text: editingStepText } : step
+              ),
+            }
+          : idea
+      ),
+    };
+    updateLog(updatedLog);
+    setEditingStepId(null);
+    setEditingStepText("");
+  };
+
   if (!log) {
     return <p className="text-center text-gray-600">Loading...</p>;
   }
@@ -257,8 +304,23 @@ export default function AnxietyDetailPage() {
                 <div key={idea.id} className="rounded-xl border border-[#C5D5C5] bg-[#B8D4E3] p-4 shadow-sm relative">
                   <button onClick={() => deleteIdea(idea.id)} className="absolute top-2 right-2 text-red-400 hover:text-red-600 text-lg">🗑️</button>
                   <div className="font-semibold text-[#4A6FA5] mb-2 flex items-center gap-2">
-                    {idea.title}
-                    <span className="ml-2 text-xs text-[#7A9B8E]">{percent}%</span>
+                    {editingIdeaId === idea.id && !editingStepId ? (
+                      <>
+                        <input
+                          value={editingIdeaTitle}
+                          onChange={e => setEditingIdeaTitle(e.target.value)}
+                          className="border rounded px-2 py-1 mr-2"
+                        />
+                        <button onClick={() => saveEditIdea(idea.id)} className="modern-btn px-2 py-1 text-xs mr-1">Save</button>
+                        <button onClick={() => setEditingIdeaId(null)} className="modern-btn px-2 py-1 text-xs" style={{ background: '#E8DDD4', color: '#4A6FA5' }}>Cancel</button>
+                      </>
+                    ) : (
+                      <>
+                        {idea.title}
+                        <button onClick={() => startEditIdea(idea)} className="ml-2 text-xs text-blue-500">✏️</button>
+                        <span className="ml-2 text-xs text-[#7A9B8E]">{percent}%</span>
+                      </>
+                    )}
                   </div>
                   <div className="w-full bg-[#E8DDD4] rounded-full h-2 mb-2">
                     <div
@@ -275,7 +337,22 @@ export default function AnxietyDetailPage() {
                           onChange={() => toggleStep(idea.id, step.id)}
                           className="accent-[#7A9B8E] w-4 h-4 rounded"
                         />
-                        <span className={step.done ? 'line-through text-gray-500' : ''}>{step.text}</span>
+                        {editingStepId === step.id ? (
+                          <>
+                            <input
+                              value={editingStepText}
+                              onChange={e => setEditingStepText(e.target.value)}
+                              className="border rounded px-2 py-1 mr-2"
+                            />
+                            <button onClick={() => saveEditStep(idea.id, step.id)} className="modern-btn px-2 py-1 text-xs mr-1">Save</button>
+                            <button onClick={() => setEditingStepId(null)} className="modern-btn px-2 py-1 text-xs" style={{ background: '#E8DDD4', color: '#4A6FA5' }}>Cancel</button>
+                          </>
+                        ) : (
+                          <>
+                            <span className={step.done ? 'line-through text-gray-500' : ''}>{step.text}</span>
+                            <button onClick={() => startEditStep(idea.id, step)} className="text-xs text-blue-500 ml-1">✏️</button>
+                          </>
+                        )}
                         <button onClick={() => deleteStep(idea.id, step.id)} className="text-xs text-red-400 hover:text-red-600">🗑️</button>
                       </li>
                     ))}
