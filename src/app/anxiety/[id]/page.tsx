@@ -136,6 +136,30 @@ export default function AnxietyDetailPage() {
     setShowSave(false);
   };
 
+  // Delete an idea
+  const deleteIdea = (ideaId: string) => {
+    if (!log) return;
+    const updatedLog: Anxiety = {
+      ...log,
+      ideas: log.ideas?.filter((idea) => idea.id !== ideaId),
+    };
+    updateLog(updatedLog);
+  };
+
+  // Delete a step from an idea
+  const deleteStep = (ideaId: string, stepId: string) => {
+    if (!log) return;
+    const updatedLog: Anxiety = {
+      ...log,
+      ideas: log.ideas?.map((idea) =>
+        idea.id === ideaId
+          ? { ...idea, steps: idea.steps.filter((step) => step.id !== stepId) }
+          : idea
+      ),
+    };
+    updateLog(updatedLog);
+  };
+
   if (!log) {
     return <p className="text-center text-gray-600">Loading...</p>;
   }
@@ -205,7 +229,7 @@ export default function AnxietyDetailPage() {
       </div>
 
       <div className="card mt-8">
-        <h2 className="text-lg font-semibold mb-2" style={{ color: '#4A6FA5' }}>What can I do?</h2>
+        <h2 className="text-lg font-semibold mb-2" style={{ color: '#4A6FA5' }}>🧩 Brainstorm</h2>
         <div className="flex gap-2 mb-4">
           <input
             type="text"
@@ -220,46 +244,62 @@ export default function AnxietyDetailPage() {
             className="modern-btn"
             style={{ background: '#4A6FA5' }}
           >
-            Add Idea
+            + Add Idea
           </button>
         </div>
         {log.ideas && log.ideas.length > 0 ? (
           <div className="space-y-4">
-            {log.ideas.map((idea) => (
-              <div key={idea.id} className="rounded-xl border border-[#C5D5C5] bg-[#B8D4E3] p-4 shadow-sm">
-                <div className="font-semibold text-[#4A6FA5] mb-2">{idea.title}</div>
-                <ul className="mb-2">
-                  {idea.steps.map((step) => (
-                    <li key={step.id} className="flex items-center gap-2 mb-1">
-                      <input
-                        type="checkbox"
-                        checked={step.done}
-                        onChange={() => toggleStep(idea.id, step.id)}
-                        className="accent-[#7A9B8E] w-4 h-4 rounded"
-                      />
-                      <span className={step.done ? 'line-through text-gray-500' : ''}>{step.text}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="Add a step..."
-                    value={newStep[idea.id] || ''}
-                    onChange={(e) => setNewStep((prev) => ({ ...prev, [idea.id]: e.target.value }))}
-                    className="flex-1 border border-[#C5D5C5] rounded px-2 py-1 focus:border-[#4A6FA5]"
-                    style={{ background: '#E8DDD4' }}
-                  />
-                  <button
-                    onClick={() => addStep(idea.id)}
-                    className="modern-btn px-3 py-1 text-sm"
-                    style={{ background: '#7A9B8E' }}
-                  >
-                    Add Step
-                  </button>
+            {log.ideas.map((idea) => {
+              const total = idea.steps.length;
+              const done = idea.steps.filter(s => s.done).length;
+              const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+              return (
+                <div key={idea.id} className="rounded-xl border border-[#C5D5C5] bg-[#B8D4E3] p-4 shadow-sm relative">
+                  <button onClick={() => deleteIdea(idea.id)} className="absolute top-2 right-2 text-red-400 hover:text-red-600 text-lg">🗑️</button>
+                  <div className="font-semibold text-[#4A6FA5] mb-2 flex items-center gap-2">
+                    {idea.title}
+                    <span className="ml-2 text-xs text-[#7A9B8E]">{percent}%</span>
+                  </div>
+                  <div className="w-full bg-[#E8DDD4] rounded-full h-2 mb-2">
+                    <div
+                      className="h-2 rounded-full"
+                      style={{ width: `${percent}%`, background: '#4A6FA5', transition: 'width 0.3s' }}
+                    ></div>
+                  </div>
+                  <ul className="mb-2">
+                    {idea.steps.map((step) => (
+                      <li key={step.id} className="flex items-center gap-2 mb-1">
+                        <input
+                          type="checkbox"
+                          checked={step.done}
+                          onChange={() => toggleStep(idea.id, step.id)}
+                          className="accent-[#7A9B8E] w-4 h-4 rounded"
+                        />
+                        <span className={step.done ? 'line-through text-gray-500' : ''}>{step.text}</span>
+                        <button onClick={() => deleteStep(idea.id, step.id)} className="text-xs text-red-400 hover:text-red-600">🗑️</button>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Add a step..."
+                      value={newStep[idea.id] || ''}
+                      onChange={(e) => setNewStep((prev) => ({ ...prev, [idea.id]: e.target.value }))}
+                      className="flex-1 border border-[#C5D5C5] rounded px-2 py-1 focus:border-[#4A6FA5]"
+                      style={{ background: '#E8DDD4' }}
+                    />
+                    <button
+                      onClick={() => addStep(idea.id)}
+                      className="modern-btn px-3 py-1 text-sm"
+                      style={{ background: '#7A9B8E' }}
+                    >
+                      Add Step
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <p className="text-gray-500">No ideas yet. Brainstorm your first one!</p>
