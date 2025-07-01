@@ -128,11 +128,6 @@ export default function AnxietyDetailPage() {
     updateLog(updatedLog);
   };
 
-  // Calculate progress percentage based on updates
-  const updateCount = log?.updates.length || 0;
-  const maxUpdates = 5; // You can adjust this number as needed
-  const progress = Math.min(100, Math.round((updateCount / maxUpdates) * 100));
-
   // Save user-defined progress
   const saveProgress = () => {
     if (!log) return;
