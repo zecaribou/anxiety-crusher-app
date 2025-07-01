@@ -69,6 +69,10 @@ export default function Home() {
     setEditingId(null);
   };
 
+  const setProgress = (id: string, value: number) => {
+    setLogs(logs.map(log => log.id === id ? { ...log, progress: value } : log));
+  };
+
   // Group logs by status
   const grouped = {
     thinking: logs.filter((l) => l.status === "thinking"),
@@ -120,81 +124,87 @@ export default function Home() {
         Log It
       </button>
 
-      {(["thinking", "acting", "solved"] as const).map((status) => (
-        <div key={status} className="w-full max-w-md mb-6">
-          <h2 className="text-xl font-semibold mb-2 capitalize" style={{ color: 'var(--blue)' }}>
-            {status === "thinking" ? "Thinking" : status === "acting" ? "Acting" : "Solved"}
-          </h2>
-          {grouped[status].length === 0 ? (
-            <p className="text-gray-400 text-center">No problems here.</p>
-          ) : (
-            grouped[status].map((log) => (
-              <div key={log.id} className="card flex items-center gap-4 mb-2">
-                {editingId === log.id ? (
+      <div className="w-full max-w-md">
+        {logs.length === 0 ? (
+          <p className="text-gray-600 text-center">No worries logged yet.</p>
+        ) : (
+          logs.map((log) => (
+            <div key={log.id} className="card flex items-center gap-4 mb-2">
+              {editingId === log.id ? (
+                <div className="flex-1 min-w-0">
+                  <input
+                    value={editText}
+                    onChange={e => setEditText(e.target.value)}
+                    className="w-full mb-1 border rounded px-2 py-1"
+                  />
+                  <input
+                    value={editDescription}
+                    onChange={e => setEditDescription(e.target.value)}
+                    className="w-full mb-1 border rounded px-2 py-1"
+                  />
+                  <select
+                    value={editStatus}
+                    onChange={e => setEditStatus(e.target.value as "thinking" | "acting" | "solved")}
+                    className="w-full mb-1 border rounded px-2 py-1"
+                  >
+                    <option value="thinking">Thinking</option>
+                    <option value="acting">Acting</option>
+                    <option value="solved">Solved</option>
+                  </select>
+                  <button onClick={() => saveEdit(log.id)} className="modern-btn px-3 py-1 mr-2">Save</button>
+                  <button onClick={() => setEditingId(null)} className="modern-btn px-3 py-1" style={{ background: '#E8DDD4', color: '#4A6FA5' }}>Cancel</button>
+                </div>
+              ) : (
+                <>
                   <div className="flex-1 min-w-0">
-                    <input
-                      value={editText}
-                      onChange={e => setEditText(e.target.value)}
-                      className="w-full mb-1 border rounded px-2 py-1"
-                    />
-                    <input
-                      value={editDescription}
-                      onChange={e => setEditDescription(e.target.value)}
-                      className="w-full mb-1 border rounded px-2 py-1"
-                    />
-                    <select
-                      value={editStatus}
-                      onChange={e => setEditStatus(e.target.value as "thinking" | "acting" | "solved")}
-                      className="w-full mb-1 border rounded px-2 py-1"
-                    >
-                      <option value="thinking">Thinking</option>
-                      <option value="acting">Acting</option>
-                      <option value="solved">Solved</option>
-                    </select>
-                    <button onClick={() => saveEdit(log.id)} className="modern-btn px-3 py-1 mr-2">Save</button>
-                    <button onClick={() => setEditingId(null)} className="modern-btn px-3 py-1" style={{ background: '#E8DDD4', color: '#4A6FA5' }}>Cancel</button>
+                    <p className="text-gray-800 mb-1 truncate font-semibold flex items-center">
+                      {log.text}
+                      <button onClick={() => startEdit(log)} className="ml-2 text-xs text-blue-500">✏️</button>
+                    </p>
+                    <p className="text-sm text-gray-500 mb-1 flex items-center">
+                      {log.description || <span className="italic text-gray-300">No description</span>}
+                      <button onClick={() => startEdit(log)} className="ml-2 text-xs text-blue-400">✏️</button>
+                    </p>
+                    <p className="text-xs text-gray-400">Logged on: {new Date(log.createdAt).toLocaleString()}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className={`status-tag status-${log.status}`}>{log.status.charAt(0).toUpperCase() + log.status.slice(1)}</span>
+                    </div>
                   </div>
-                ) : (
-                  <>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-gray-800 mb-1 truncate font-semibold flex items-center">
-                        {log.text}
-                        <button onClick={() => startEdit(log)} className="ml-2 text-xs text-blue-500">✏️</button>
-                      </p>
-                      <p className="text-sm text-gray-500 mb-1 flex items-center">
-                        {log.description || <span className="italic text-gray-300">No description</span>}
-                        <button onClick={() => startEdit(log)} className="ml-2 text-xs text-blue-400">✏️</button>
-                      </p>
-                      <p className="text-xs text-gray-400">Logged on: {new Date(log.createdAt).toLocaleString()}</p>
-                    </div>
-                    <div className="flex flex-col items-center min-w-[56px]">
-                      <svg width="48" height="48" viewBox="0 0 48 48">
-                        <circle cx="24" cy="24" r="20" fill="#E8DDD4" />
-                        <circle
-                          cx="24"
-                          cy="24"
-                          r="20"
-                          fill="none"
-                          stroke="#4A6FA5"
-                          strokeWidth="4"
-                          strokeDasharray={2 * Math.PI * 20}
-                          strokeDashoffset={2 * Math.PI * 20 * (1 - (log.progress ?? 0) / 100)}
-                          strokeLinecap="round"
-                        />
-                        <text x="24" y="28" textAnchor="middle" fontSize="16" fill="#4A6FA5" fontWeight="bold">
-                          {log.progress ?? 0}%
-                        </text>
-                      </svg>
-                      <span className="text-xs text-[#7A9B8E] mt-1">Progress</span>
-                    </div>
-                    <button onClick={() => handleDelete(log.id)} className="ml-2 text-red-400 hover:text-red-600 text-xl">🗑️</button>
-                  </>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      ))}
+                  <div className="flex flex-col items-center min-w-[56px]">
+                    <svg width="48" height="48" viewBox="0 0 48 48">
+                      <circle cx="24" cy="24" r="20" fill="#E8DDD4" />
+                      <circle
+                        cx="24"
+                        cy="24"
+                        r="20"
+                        fill="none"
+                        stroke="#4A6FA5"
+                        strokeWidth="4"
+                        strokeDasharray={2 * Math.PI * 20}
+                        strokeDashoffset={2 * Math.PI * 20 * (1 - (log.progress ?? 0) / 100)}
+                        strokeLinecap="round"
+                      />
+                      <text x="24" y="28" textAnchor="middle" fontSize="16" fill="#4A6FA5" fontWeight="bold">
+                        {log.progress ?? 0}%
+                      </text>
+                    </svg>
+                    <span className="text-xs text-[#7A9B8E] mt-1">Progress</span>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={log.progress ?? 0}
+                      onChange={e => setProgress(log.id, Number(e.target.value))}
+                      className="w-full accent-[#4A6FA5] mt-2"
+                    />
+                  </div>
+                  <button onClick={() => handleDelete(log.id)} className="ml-2 text-red-400 hover:text-red-600 text-xl">🗑️</button>
+                </>
+              )}
+            </div>
+          ))
+        )}
+      </div>
 
       {showSummary && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
